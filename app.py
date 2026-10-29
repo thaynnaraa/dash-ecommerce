@@ -1,4 +1,3 @@
-
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
@@ -9,20 +8,19 @@ df = pd.read_csv('ecommerce_estatistica.csv')
 for coluna in ['Preço', 'Nota', 'N_Avaliações']:
     df[coluna] = pd.to_numeric(df[coluna], errors='coerce')
 
-# Remove registros sem os dados principais
 df = df.dropna(subset=['Preço', 'Nota'])
 
 # Paletas de cores
 CORES = px.colors.qualitative.Set2
 CORES_VIVAS = px.colors.qualitative.Bold
 
-
 def cria_graficos(filtro_genero):
+
     # 2. Filtragem dos dados
-    if filtro_genero != 'Todos':
-        dados = df[df['Gênero'].astype(str) == filtro_genero].copy()
-    else:
+    if filtro_genero == 'Todos':
         dados = df.copy()
+    else:
+        dados = df[df['Gênero'] == filtro_genero].copy()
 
     # Gráfico 1: Histograma de preços
     fig1 = px.histogram(
@@ -41,29 +39,19 @@ def cria_graficos(filtro_genero):
     # Gráfico 2: Pizza das 8 marcas mais frequentes
     marcas = dados['Marca'].fillna('Não informado')
     contagem = marcas.value_counts()
-
     principais = contagem.head(8)
-    if len(contagem) > 8:
-        principais.loc['Outras'] = contagem.iloc[8:].sum()
 
     fig2 = px.pie(
         names=principais.index,
         values=principais.values,
-        title='Distribuição de Produtos por Marca',
-        color_discrete_sequence=px.colors.qualitative.Pastel,
-        hole=0.25
-    )
-
-    fig2.update_traces(
-        textposition='inside',
-        textinfo='percent',
-        hovertemplate='%{label}<br>Quantidade: %{value}<br>Participação: %{percent}<extra></extra>'
+        title='8 Marcas com Mais Produtos',
+        color_discrete_sequence=px.colors.qualitative.Pastel
     )
 
     # Gráfico 3: Bolhas
     bolhas = dados.dropna(
         subset=['Nota', 'Preço', 'N_Avaliações', 'Gênero']
-    ).copy()
+    )
 
     fig3 = px.scatter(
         bolhas,
@@ -71,8 +59,6 @@ def cria_graficos(filtro_genero):
         y='Preço',
         size='N_Avaliações',
         color='Gênero',
-        hover_name='Título',
-        size_max=35,
         title='Preço e Nota dos Produtos',
         color_discrete_map={
             'Masculino': '#1f77b4',
@@ -94,17 +80,13 @@ def cria_graficos(filtro_genero):
     )
 
     # Gráfico 4: Linha com preço médio por nota
-    linha = (
-        dados.groupby('Nota', as_index=False)['Preço']
-        .mean()
-        .sort_values('Nota')
-    )
+    linha = dados.groupby('Nota')['Preço'].mean().reset_index()
+    linha = linha.sort_values('Nota')
 
     fig4 = px.line(
         linha,
         x='Nota',
         y='Preço',
-        markers=True,
         title='Preço Médio por Nota',
         color_discrete_sequence=[CORES_VIVAS[1]]
     )
@@ -117,7 +99,7 @@ def cria_graficos(filtro_genero):
     # Gráfico 5: Visualização 3D
     dados3d = dados.dropna(
         subset=['Preço', 'Nota', 'N_Avaliações', 'Temporada']
-    ).copy()
+    )
 
     fig5 = px.scatter_3d(
         dados3d,
@@ -126,8 +108,7 @@ def cria_graficos(filtro_genero):
         z='N_Avaliações',
         color='Temporada',
         title='Visualização 3D dos Produtos',
-        color_discrete_sequence=px.colors.qualitative.Dark24,
-        hover_name='Título'
+        color_discrete_sequence=px.colors.qualitative.Dark24
     )
 
     fig5.update_layout(
@@ -140,16 +121,16 @@ def cria_graficos(filtro_genero):
     )
 
     # Gráfico 6: Barras das 10 marcas com mais produtos
-    top_marcas = dados['Marca'].fillna('Não informado').value_counts().head(10).index
+    marcas = dados['Marca'].fillna('Não informado')
+    contagem_marcas = marcas.value_counts()
+    top_marcas = contagem_marcas.head(10).index
 
-    barras = dados[dados['Marca'].fillna('Não informado').isin(top_marcas)].copy()
+    barras = dados.copy()
     barras['Marca'] = barras['Marca'].fillna('Não informado')
+    barras = barras[barras['Marca'].isin(top_marcas)]
 
-    media_marcas = (
-        barras.groupby('Marca', as_index=False)['Preço']
-        .mean()
-        .sort_values('Preço', ascending=False)
-    )
+    media_marcas = barras.groupby('Marca')['Preço'].mean().reset_index()
+    media_marcas = media_marcas.sort_values('Preço', ascending=False)
 
     fig6 = px.bar(
         media_marcas,
@@ -168,18 +149,21 @@ def cria_graficos(filtro_genero):
 
     return fig1, fig2, fig3, fig4, fig5, fig6
 
-
 # 3. Criação do dashboard
 app = Dash(__name__)
+
+generos = df['Gênero'].dropna().unique().tolist()
+generos.sort()
 
 opcoes_genero = [
     {'label': 'Todos os gêneros', 'value': 'Todos'}
 ]
 
-opcoes_genero += [
-    {'label': str(genero), 'value': str(genero)}
-    for genero in sorted(df['Gênero'].dropna().unique())
-]
+for genero in generos:
+    opcoes_genero.append({
+        'label': genero,
+        'value': genero
+    })
 
 app.layout = html.Div([
     html.H1(
@@ -198,8 +182,7 @@ app.layout = html.Div([
         id='filtro-genero',
         options=opcoes_genero,
         value='Todos',
-        clearable=False,
-        style={'marginBottom': '25px'}
+        clearable=False
     ),
 
     dcc.Graph(id='grafico-histograma'),
@@ -209,13 +192,7 @@ app.layout = html.Div([
     dcc.Graph(id='grafico-3d'),
     dcc.Graph(id='grafico-barras')
 
-], style={
-    'maxWidth': '1200px',
-    'margin': 'auto',
-    'padding': '20px',
-    'fontFamily': 'Arial, sans-serif'
-})
-
+], style={'maxWidth': '1200px'})
 
 # 4. Atualização dos gráficos pelo filtro
 @app.callback(
@@ -231,7 +208,6 @@ app.layout = html.Div([
 )
 def atualiza_graficos(filtro_genero):
     return cria_graficos(filtro_genero)
-
 
 # 5. Execução da aplicação
 if __name__ == '__main__':
