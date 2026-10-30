@@ -1,214 +1,144 @@
 import pandas as pd
 import plotly.express as px
-from dash import Dash, dcc, html, Input, Output
+from dash import Dash, dcc, html
 
-# 1. Leitura e preparação dos dados
+# Leitura e preparação dos dados
 df = pd.read_csv('ecommerce_estatistica.csv')
 
-for coluna in ['Preço', 'Nota', 'N_Avaliações']:
+# Conversão das colunas numéricas
+for coluna in ['Nota', 'N_Avaliações', 'Desconto', 'Preço']:
     df[coluna] = pd.to_numeric(df[coluna], errors='coerce')
 
-df = df.dropna(subset=['Preço', 'Nota'])
 
-# Paletas de cores
-CORES = px.colors.qualitative.Set2
-CORES_VIVAS = px.colors.qualitative.Bold
+# Gráfico 1: Histograma dos preços
+fig1 = px.histogram(
+    df,
+    x='Preço',
+    nbins=20,
+    title='Distribuição dos Preços dos Produtos',
+    color_discrete_sequence=['green']
+)
 
-def cria_graficos(filtro_genero):
+fig1.update_layout(
+    xaxis_title='Preço (R$)',
+    yaxis_title='Quantidade de Produtos'
+)
 
-    # 2. Filtragem dos dados
-    if filtro_genero == 'Todos':
-        dados = df.copy()
-    else:
-        dados = df[df['Gênero'] == filtro_genero].copy()
+# 3. Gráfico 2: Dispersão
+fig2 = px.scatter(
+    df,
+    x='Preço',
+    y='N_Avaliações',
+    title='Relação entre Preço e Número de Avaliações dos Produtos',
+    color_discrete_sequence=['blue'],
+    opacity=0.8
+)
 
-    # Gráfico 1: Histograma de preços
-    fig1 = px.histogram(
-        dados,
-        x='Preço',
-        nbins=30,
-        title='Distribuição dos Preços',
-        color_discrete_sequence=[CORES[0]]
-    )
+fig2.update_layout(
+    xaxis_title='Preço (R$)',
+    yaxis_title='Número de Avaliações'
+)
 
-    fig1.update_layout(
-        xaxis_title='Preço',
-        yaxis_title='Quantidade de Produtos'
-    )
+# Gráfico 3: Mapa de calor
+correlacao = df[
+    ['Nota', 'N_Avaliações', 'Desconto', 'Preço']
+].corr()
 
-    # Gráfico 2: Pizza das 8 marcas mais frequentes
-    marcas = dados['Marca'].fillna('Não informado')
-    contagem = marcas.value_counts()
-    principais = contagem.head(8)
+fig3 = px.imshow(
+    correlacao,
+    text_auto='.2f',
+    color_continuous_scale='RdBu_r',
+    title='Mapa de Calor da Correlação entre as Variáveis',
+    zmin=-1,
+    zmax=1
+)
 
-    fig2 = px.pie(
-        names=principais.index,
-        values=principais.values,
-        title='8 Marcas com Mais Produtos',
-        color_discrete_sequence=px.colors.qualitative.Pastel
-    )
+# Gráfico 4: Barras
+genero = df['Gênero'].value_counts().reset_index()
+genero.columns = ['Gênero', 'Quantidade']
 
-    # Gráfico 3: Bolhas
-    bolhas = dados.dropna(
-        subset=['Nota', 'Preço', 'N_Avaliações', 'Gênero']
-    )
+fig4 = px.bar(
+    genero,
+    x='Gênero',
+    y='Quantidade',
+    title='Quantidade de Produtos por Gênero',
+    color_discrete_sequence=['orange']
+)
 
-    fig3 = px.scatter(
-        bolhas,
-        x='Nota',
-        y='Preço',
-        size='N_Avaliações',
-        color='Gênero',
-        title='Preço e Nota dos Produtos',
-        color_discrete_map={
-            'Masculino': '#1f77b4',
-            'Feminino': '#e377c2',
-            'Sem gênero': '#7f7f7f',
-            'Meninos': '#17becf',
-            'Meninas': '#bcbd22',
-            'Sem gênero infantil': '#9467bd',
-            'Bebês': '#ff7f0e',
-            'Unissex': '#2ca02c',
-            'roupa para gordinha pluss P ao 52': '#d62728'
-        }
-    )
+fig4.update_layout(
+    xaxis_title='Gênero',
+    yaxis_title='Quantidade de Produtos'
+)
 
-    fig3.update_layout(
-        xaxis_title='Nota',
-        yaxis_title='Preço',
-        legend_title='Gênero'
-    )
+# Gráfico 5: Pizza
+qtd_vendidos = df['Qtd_Vendidos'].value_counts().reset_index()
+qtd_vendidos.columns = ['Faixa de Vendas', 'Quantidade']
 
-    # Gráfico 4: Linha com preço médio por nota
-    linha = dados.groupby('Nota')['Preço'].mean().reset_index()
-    linha = linha.sort_values('Nota')
+fig5 = px.pie(
+    qtd_vendidos,
+    names='Faixa de Vendas',
+    values='Quantidade',
+    title='Distribuição dos Produtos por Faixa de Vendas',
+    color_discrete_sequence=px.colors.qualitative.Pastel
+)
 
-    fig4 = px.line(
-        linha,
-        x='Nota',
-        y='Preço',
-        title='Preço Médio por Nota',
-        color_discrete_sequence=[CORES_VIVAS[1]]
-    )
+# Gráfico 6: Densidade
+fig6 = px.histogram(
+    df,
+    x='Preço',
+    nbins=30,
+    histnorm='probability density',
+    title='Distribuição dos Preços dos Produtos',
+    color_discrete_sequence=['purple']
+)
 
-    fig4.update_layout(
-        xaxis_title='Nota',
-        yaxis_title='Preço Médio'
-    )
+fig6.update_layout(
+    xaxis_title='Preço (R$)',
+    yaxis_title='Densidade'
+)
 
-    # Gráfico 5: Visualização 3D
-    dados3d = dados.dropna(
-        subset=['Preço', 'Nota', 'N_Avaliações', 'Temporada']
-    )
+# Gráfico 7: Regressão
+fig7 = px.scatter(
+    df,
+    x='Preço',
+    y='N_Avaliações',
+    trendline='ols',
+    title='Regressão entre Preço e Número de Avaliações',
+    color_discrete_sequence=['green'],
+    opacity=0.6,
+    trendline_color_override='red'
+)
 
-    fig5 = px.scatter_3d(
-        dados3d,
-        x='Preço',
-        y='Nota',
-        z='N_Avaliações',
-        color='Temporada',
-        title='Visualização 3D dos Produtos',
-        color_discrete_sequence=px.colors.qualitative.Dark24
-    )
+fig7.update_layout(
+    xaxis_title='Preço (R$)',
+    yaxis_title='Número de Avaliações'
+)
 
-    fig5.update_layout(
-        scene=dict(
-            xaxis_title='Preço',
-            yaxis_title='Nota',
-            zaxis_title='Número de Avaliações'
-        ),
-        legend_title='Temporada'
-    )
-
-    # Gráfico 6: Barras das 10 marcas com mais produtos
-    marcas = dados['Marca'].fillna('Não informado')
-    contagem_marcas = marcas.value_counts()
-    top_marcas = contagem_marcas.head(10).index
-
-    barras = dados.copy()
-    barras['Marca'] = barras['Marca'].fillna('Não informado')
-    barras = barras[barras['Marca'].isin(top_marcas)]
-
-    media_marcas = barras.groupby('Marca')['Preço'].mean().reset_index()
-    media_marcas = media_marcas.sort_values('Preço', ascending=False)
-
-    fig6 = px.bar(
-        media_marcas,
-        x='Marca',
-        y='Preço',
-        title='Preço Médio das 10 Principais Marcas',
-        color='Marca',
-        color_discrete_sequence=CORES_VIVAS
-    )
-
-    fig6.update_layout(
-        xaxis_title='Marca',
-        yaxis_title='Preço Médio',
-        showlegend=False
-    )
-
-    return fig1, fig2, fig3, fig4, fig5, fig6
-
-# 3. Criação do dashboard
+# Criação do dashboard
 app = Dash(__name__)
 
-generos = df['Gênero'].dropna().unique().tolist()
-generos.sort()
-
-opcoes_genero = [
-    {'label': 'Todos os gêneros', 'value': 'Todos'}
-]
-
-for genero in generos:
-    opcoes_genero.append({
-        'label': genero,
-        'value': genero
-    })
-
 app.layout = html.Div([
+
     html.H1(
         'Dashboard de E-commerce',
         style={'textAlign': 'center'}
     ),
 
     html.P(
-        'Explore os dados dos produtos usando o filtro de gênero.',
+        'Análise dos dados dos produtos por meio de gráficos estatísticos.',
         style={'textAlign': 'center'}
     ),
 
-    html.Label('Selecione o gênero:'),
+    dcc.Graph(figure=fig1),
+    dcc.Graph(figure=fig2),
+    dcc.Graph(figure=fig3),
+    dcc.Graph(figure=fig4),
+    dcc.Graph(figure=fig5),
+    dcc.Graph(figure=fig6),
+    dcc.Graph(figure=fig7)
 
-    dcc.Dropdown(
-        id='filtro-genero',
-        options=opcoes_genero,
-        value='Todos',
-        clearable=False
-    ),
+], style={'maxWidth': '1200px', 'margin': 'auto'})
 
-    dcc.Graph(id='grafico-histograma'),
-    dcc.Graph(id='grafico-pizza'),
-    dcc.Graph(id='grafico-bolhas'),
-    dcc.Graph(id='grafico-linha'),
-    dcc.Graph(id='grafico-3d'),
-    dcc.Graph(id='grafico-barras')
-
-], style={'maxWidth': '1200px'})
-
-# 4. Atualização dos gráficos pelo filtro
-@app.callback(
-    [
-        Output('grafico-histograma', 'figure'),
-        Output('grafico-pizza', 'figure'),
-        Output('grafico-bolhas', 'figure'),
-        Output('grafico-linha', 'figure'),
-        Output('grafico-3d', 'figure'),
-        Output('grafico-barras', 'figure')
-    ],
-    Input('filtro-genero', 'value')
-)
-def atualiza_graficos(filtro_genero):
-    return cria_graficos(filtro_genero)
-
-# 5. Execução da aplicação
+# Execução da aplicação
 if __name__ == '__main__':
     app.run(debug=True, port=8050)
