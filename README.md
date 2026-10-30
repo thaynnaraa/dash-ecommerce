@@ -10,6 +10,8 @@ Este projeto foi desenvolvido como atividade de estudo de análise de dados. O o
 - Pandas
 - Plotly
 - Dash
+- Scipy
+- Statsmodels
 
 ## Gráficos disponíveis
 
