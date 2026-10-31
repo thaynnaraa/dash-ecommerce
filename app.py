@@ -25,7 +25,7 @@ fig1.update_layout(
     yaxis_title='Quantidade de Produtos'
 )
 
-# 3. Gráfico 2: Dispersão - Relação entre preço e número de avaliações
+# Gráfico 2: Dispersão - Relação entre preço e número de avaliações
 fig2 = px.scatter(
     df,
     x='Preço',
@@ -139,7 +139,7 @@ app.layout = html.Div([
     
     html.H3('4. Preço Médio dos Produtos por Marca'),
     
-    dcc.Label('Selecione uma marca:'),
+    html.Label('Selecione uma marca:'),
     
     dcc.Dropdown(
         id='filtro-marca',
@@ -154,9 +154,6 @@ app.layout = html.Div([
     ),
     
     dcc.Graph(id='grafico4', figure=fig4),
-    dcc.Graph(figure=fig5),
-    dcc.Graph(figure=fig6),
-    dcc.Graph(figure=fig7)
     dcc.Graph(figure=fig5),
     dcc.Graph(figure=fig6),
     dcc.Graph(figure=fig7)
