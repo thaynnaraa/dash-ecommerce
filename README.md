@@ -15,16 +15,21 @@ Este projeto foi desenvolvido como atividade de estudo de análise de dados. O o
 
 ## Gráficos disponíveis
 
-O dashboard apresenta seis gráficos:
+O dashboard apresenta sete gráficos:
 
-1. Histograma da distribuição dos preços dos produtos.
-2. Gráfico de pizza com as oito marcas com mais produtos.
-3. Gráfico de bolhas relacionando preço, nota e número de avaliações.
-4. Gráfico de linha com o preço médio por nota.
-5. Gráfico de dispersão 3D dos produtos.
-6. Gráfico de barras com o preço médio das dez principais marcas.
+1. **Histograma:** apresenta a distribuição dos preços dos produtos.
+2. **Gráfico de dispersão:** demonstra a relação entre o preço dos produtos e o número de avaliações.
+3. **Mapa de calor:** apresenta a correlação entre as variáveis numéricas Nota, N_Avaliações, Desconto e Preço.
+4. **Gráfico de barras:** compara o preço médio dos produtos por marca, destacando inicialmente as dez marcas com maior preço médio.
+5. **Gráfico de pizza:** apresenta a distribuição dos produtos por faixa de vendas (`Qtd_Vendidos`).
+6. **Gráfico de densidade:** apresenta a distribuição dos preços em escala de densidade, permitindo observar sua concentração.
+7. **Gráfico de regressão:** demonstra a tendência da relação entre preço e número de avaliações dos produtos.
 
-A página também possui um filtro para visualizar os dados por gênero.
+## Interatividade
+
+O dashboard possui um filtro interativo por marca no gráfico de barras. É possível selecionar uma marca específica para visualizar seu preço médio ou escolher a opção "Todas as marcas" para visualizar as dez marcas com maior preço médio.
+
+A atualização do gráfico é realizada por meio de um callback do Dash (`@app.callback`).
 
 ## Arquivos do projeto
 
@@ -35,10 +40,15 @@ A página também possui um filtro para visualizar os dados por gênero.
 ## Como executar o projeto
 
 1. Instale as bibliotecas listadas no arquivo `requirements.txt`:
+
    `pip install -r requirements.txt`
-3. Execute o arquivo `app.py`:
+
+2. Execute o arquivo `app.py`:
+
    `python app.py`
-5. Abra o endereço indicado no terminal, no navegador.
+
+3. Abra o endereço indicado no terminal em um navegador. Por padrão, a aplicação é executada em `http://127.0.0.1:8050`.
 
 ## Observação
-Este projeto foi desenvolvido para fins de aprendizado e prática de visualização de dados com Python.
+
+Este projeto foi desenvolvido para fins de aprendizado e prática de análise e visualização de dados com Python.
