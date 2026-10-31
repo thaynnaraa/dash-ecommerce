@@ -35,8 +35,10 @@ A página também possui um filtro para visualizar os dados por gênero.
 ## Como executar o projeto
 
 1. Instale as bibliotecas listadas no arquivo `requirements.txt`:
-2. Execute o arquivo `app.py`:
-3. Abra o endereço indicado no terminal, no navegador.
+   `pip install -r requirements.txt`
+3. Execute o arquivo `app.py`:
+   `python app.py`
+5. Abra o endereço indicado no terminal, no navegador.
 
 ## Observação
 Este projeto foi desenvolvido para fins de aprendizado e prática de visualização de dados com Python.
