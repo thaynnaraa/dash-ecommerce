@@ -1,4 +1,3 @@
-```python
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
@@ -198,4 +197,3 @@ def atualizar_grafico4(marca):
 # Execução da aplicação
 if __name__ == '__main__':
     app.run(debug=True, port=8050)
-```
