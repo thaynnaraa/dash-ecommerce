@@ -41,13 +41,17 @@ A atualização do gráfico é realizada por meio de um callback do Dash (`@app.
 
 1. Instale as bibliotecas listadas no arquivo `requirements.txt`:
 
-   `pip install -r requirements.txt`
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2. Execute o arquivo `app.py`:
+3. Execute o arquivo `app.py`:
 
-   `python app.py`
+   ```bash
+   python app.py
+   ```
 
-3. Abra o endereço indicado no terminal em um navegador. Por padrão, a aplicação é executada em `http://127.0.0.1:8050`.
+5. Abra o endereço indicado no terminal em um navegador. Por padrão, a aplicação é executada em `http://127.0.0.1:8050`.
 
 ## Observação
 
