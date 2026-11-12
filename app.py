@@ -1,5 +1,9 @@
+
 import pandas as pd
+import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
+from scipy.stats import gaussian_kde
 from dash import Dash, dcc, html, Input, Output
 
 # Leitura e preparação dos dados
@@ -8,7 +12,6 @@ df = pd.read_csv('ecommerce_estatistica.csv')
 # Conversão das colunas numéricas
 for coluna in ['Nota', 'N_Avaliações', 'Desconto', 'Preço']:
     df[coluna] = pd.to_numeric(df[coluna], errors='coerce')
-
 
 # Gráfico 1: Histograma - Distribuição dos preços
 fig1 = px.histogram(
@@ -86,16 +89,31 @@ fig5 = px.pie(
 )
 
 # Gráfico 6: Densidade - Concentração dos preços
-fig6 = px.histogram(
-    df,
-    x='Preço',
-    nbins=30,
-    histnorm='probability density',
-    title='Distribuição dos Preços dos Produtos',
-    color_discrete_sequence=['purple']
+precos = df['Preço'].dropna()
+
+densidade = gaussian_kde(precos)
+
+eixo_precos = np.linspace(
+    precos.min(), precos.max(), 300
+)
+
+valores_densidade = densidade(eixo_precos)
+
+fig6 = go.Figure()
+
+fig6.add_trace(
+    go.Scatter(
+        x=eixo_precos,
+        y=valores_densidade,
+        mode='lines',
+        fill='tozeroy',
+        line=dict(color='purple'),
+        name='Densidade'
+    )
 )
 
 fig6.update_layout(
+    title='Curva de Densidade dos Preços dos Produtos',
     xaxis_title='Preço (R$)',
     yaxis_title='Densidade'
 )
@@ -120,6 +138,9 @@ fig7.update_layout(
 # Criação do dashboard
 app = Dash(__name__)
 
+# Lista de marcas em ordem alfabética
+marcas = sorted(df['Marca'].dropna().unique())
+
 app.layout = html.Div([
 
     html.H1(
@@ -135,23 +156,24 @@ app.layout = html.Div([
     dcc.Graph(figure=fig1),
     dcc.Graph(figure=fig2),
     dcc.Graph(figure=fig3),
-    
-    html.H3('4. Preço Médio dos Produtos por Marca'),
-    
-    html.Label('Selecione uma marca:'),
-    
+
+    dcc.Graph(id='grafico4', figure=fig4),
+
+    html.Label('Selecione uma ou mais marcas:'),
+
     dcc.Dropdown(
         id='filtro-marca',
         options=[
             {'label': 'Todas as marcas', 'value': 'Todas'}
         ] + [
             {'label': marca, 'value': marca}
-            for marca in df['Marca'].dropna().unique()
+            for marca in marcas
         ],
-        value='Todas',
+        value=['Todas'],
+        multi=True,
         clearable=False
     ),
-    
+
     dcc.Graph(id='grafico4', figure=fig4),
     dcc.Graph(figure=fig5),
     dcc.Graph(figure=fig6),
@@ -160,14 +182,13 @@ app.layout = html.Div([
 ], style={'maxWidth': '1200px', 'margin': 'auto'})
 
 # Filtro interativo do gráfico 4
-
 @app.callback(
     Output('grafico4', 'figure'),
     Input('filtro-marca', 'value')
 )
-def atualizar_grafico4(marca):
+def atualizar_grafico4(marcas_selecionadas):
 
-    if marca == 'Todas':
+    if not marcas_selecionadas or 'Todas' in marcas_selecionadas:
         dados = df.groupby('Marca')['Preço'].mean().reset_index()
 
         dados = dados.sort_values(
@@ -175,9 +196,15 @@ def atualizar_grafico4(marca):
         ).head(10)
 
     else:
-        dados = df[df['Marca'] == marca]
+        dados = df[
+            df['Marca'].isin(marcas_selecionadas)
+        ]
 
         dados = dados.groupby('Marca')['Preço'].mean().reset_index()
+
+        dados = dados.sort_values(
+            by='Preço', ascending=False
+        )
 
     fig = px.bar(
         dados,
