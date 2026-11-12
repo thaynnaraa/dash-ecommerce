@@ -8,6 +8,7 @@ Este projeto foi desenvolvido como atividade de estudo de análise de dados. O o
 
 - Python
 - Pandas
+- NumPy
 - Plotly
 - Dash
 - Scipy
